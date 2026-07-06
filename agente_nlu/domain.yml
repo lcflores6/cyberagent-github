@@ -1,0 +1,36 @@
+version: "3.1"
+
+intents:
+  - saludo
+  - despedida
+  - consulta_normal
+  - intento_inyeccion_prompt
+  - intento_ingenieria_social
+  - solicitud_info_sensible
+  - ofuscacion_lenguaje
+
+responses:
+  utter_saludo:
+    - text: "Hola, soy el asistente de ciberseguridad. ¿En qué puedo ayudarte?"
+
+  utter_despedida:
+    - text: "Hasta luego. Mantente seguro."
+
+  utter_consulta_normal:
+    - text: "Estoy procesando tu consulta de seguridad."
+
+  utter_alerta_inyeccion_prompt:
+    - text: "⚠️ He detectado un posible intento de inyección de instrucciones. Esta solicitud ha sido registrada como riesgo alto."
+
+  utter_alerta_ingenieria_social:
+    - text: "⚠️ Este mensaje presenta patrones de ingeniería social. No se compartirá información sin verificación adecuada."
+
+  utter_alerta_info_sensible:
+    - text: "⚠️ No puedo compartir credenciales, claves o información sensible por este medio."
+
+  utter_alerta_ofuscacion:
+    - text: "⚠️ Se detectó un posible intento de evasión de filtros mediante ofuscación del lenguaje."
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true

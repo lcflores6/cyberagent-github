@@ -1,0 +1,38 @@
+version: "3.1"
+
+rules:
+
+- rule: Responder saludo
+  steps:
+  - intent: saludo
+  - action: utter_saludo
+
+- rule: Responder despedida
+  steps:
+  - intent: despedida
+  - action: utter_despedida
+
+- rule: Responder consulta normal
+  steps:
+  - intent: consulta_normal
+  - action: utter_consulta_normal
+
+- rule: Alertar intento de inyeccion de prompt
+  steps:
+  - intent: intento_inyeccion_prompt
+  - action: utter_alerta_inyeccion_prompt
+
+- rule: Alertar ingenieria social
+  steps:
+  - intent: intento_ingenieria_social
+  - action: utter_alerta_ingenieria_social
+
+- rule: Alertar solicitud de informacion sensible
+  steps:
+  - intent: solicitud_info_sensible
+  - action: utter_alerta_info_sensible
+
+- rule: Alertar ofuscacion de lenguaje
+  steps:
+  - intent: ofuscacion_lenguaje
+  - action: utter_alerta_ofuscacion

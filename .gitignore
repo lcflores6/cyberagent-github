@@ -5,3 +5,6 @@ __pycache__/
 .vscode/
 *.log
 .DS_Store
+agente_nlu/models/
+venv_rasa/
+.rasa/

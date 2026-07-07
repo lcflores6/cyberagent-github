@@ -8,6 +8,7 @@ intents:
   - intento_ingenieria_social
   - solicitud_info_sensible
   - ofuscacion_lenguaje
+  - intento_inyeccion_y_solicitud_info
 
 responses:
   utter_saludo:
@@ -30,6 +31,9 @@ responses:
 
   utter_alerta_ofuscacion:
     - text: "⚠️ Se detectó un posible intento de evasión de filtros mediante ofuscación del lenguaje."
+
+  utter_alerta_inyeccion_y_solicitud_info:
+    - text: "⚠️ Este mensaje combina un intento de inyección de instrucciones con una solicitud de información sensible. Riesgo alto confirmado."
 
 session_config:
   session_expiration_time: 60

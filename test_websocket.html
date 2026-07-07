@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Prueba de Alertas en Tiempo Real</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1e1e1e; color: #eee; padding: 20px; }
+        h1 { color: #4CAF50; }
+        #alertas { margin-top: 20px; }
+        .alerta { background: #2d2d2d; border-left: 4px solid #f44336; padding: 10px; margin-bottom: 10px; }
+        .alerta.medio { border-left-color: #ff9800; }
+        .estado { color: #4CAF50; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🛡️ Monitor de Alertas en Tiempo Real</h1>
+    <p>Estado de conexion: <span id="estado" class="estado">Conectando...</span></p>
+    <div id="alertas"></div>
+
+    <script>
+        const ws = new WebSocket("ws://127.0.0.1:8000/ws/alertas");
+        const estadoEl = document.getElementById("estado");
+        const alertasEl = document.getElementById("alertas");
+
+        ws.onopen = () => {
+            estadoEl.textContent = "Conectado ✅";
+        };
+
+        ws.onmessage = (evento) => {
+            const datos = JSON.parse(evento.data);
+            const div = document.createElement("div");
+            div.className = "alerta " + (datos.nivel_riesgo === "medio" ? "medio" : "");
+            div.innerHTML = `
+                <strong>⚠️ Alerta de riesgo: ${datos.nivel_riesgo.toUpperCase()}</strong><br>
+                Usuario: ${datos.usuario_id}<br>
+                Mensaje: ${datos.texto_original}<br>
+                Intent: ${datos.intent_detectado} (confianza: ${datos.confianza})<br>
+                Hora: ${datos.timestamp}
+            `;
+            alertasEl.prepend(div);
+        };
+
+        ws.onclose = () => {
+            estadoEl.textContent = "Desconectado ❌";
+        };
+    </script>
+</body>
+</html>

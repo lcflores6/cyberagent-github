@@ -36,3 +36,8 @@ rules:
   steps:
   - intent: ofuscacion_lenguaje
   - action: utter_alerta_ofuscacion
+
+- rule: Alertar inyeccion combinada con solicitud de info sensible
+  steps:
+  - intent: intento_inyeccion_y_solicitud_info
+  - action: utter_alerta_inyeccion_y_solicitud_info

@@ -6,6 +6,8 @@ from app.services.pipeline_seguridad import analisis_de_patrones, validar_contex
 from app.services.asesor_gemini import consultar_asesor
 from fastapi.responses import StreamingResponse
 from app.services.threat_intelligence import consultar_cve, exportar_cves_a_csv
+from fastapi import WebSocket, WebSocketDisconnect
+from app.services.websocket_manager import gestor_websocket
 
 app = FastAPI(
     title="Agente de Ciberseguridad",
@@ -75,6 +77,16 @@ async def recibir_mensaje(mensaje: MensajeEntrada):
     if nivel_riesgo == "alto" and intent not in MENSAJES_RESPUESTA:
         mensaje_respuesta = MENSAJE_RIESGO_ALTO_GENERICO
 
+    if nivel_riesgo in ("alto", "medio"):
+        await gestor_websocket.emitir_alerta({
+            "usuario_id": mensaje.usuario_id,
+            "texto_original": mensaje.texto,
+            "intent_detectado": intent,
+            "confianza": round(confianza, 4),
+            "nivel_riesgo": nivel_riesgo,
+            "coincidencias_patrones": coincidencias,
+        })
+        
     return {
         "usuario_id": mensaje.usuario_id,
         "texto_original": mensaje.texto,
@@ -130,3 +142,13 @@ async def exportar_csv(consulta: ConsultaCVE):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=cves_resultado.csv"},
     )
+
+@app.websocket("/ws/alertas")
+async def websocket_alertas(websocket: WebSocket):
+    await gestor_websocket.conectar(websocket)
+    try:
+        while True:
+            # Mantiene la conexion abierta, esperando desconexion del cliente
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        gestor_websocket.desconectar(websocket)

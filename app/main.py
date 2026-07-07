@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import httpx
 
 from app.services.pipeline_seguridad import analisis_de_patrones, validar_contexto
-
+from app.services.asesor_gemini import consultar_asesor
 app = FastAPI(
     title="Agente de Ciberseguridad",
     description="Webhook con pipeline de seguridad para deteccion de amenazas",
@@ -29,6 +29,12 @@ class MensajeEntrada(BaseModel):
     texto: str
     usuario_id: str = "anonimo"
 
+class ConsultaAsesor(BaseModel):
+    pregunta: str
+    texto_original: str = ""
+    intent_detectado: str = ""
+    nivel_riesgo: str = ""
+    coincidencias_patrones: list = []
 
 @app.get("/")
 def raiz():
@@ -79,4 +85,20 @@ async def recibir_mensaje(mensaje: MensajeEntrada):
             },
         },
         "respuesta": mensaje_respuesta,
+    }
+
+@app.post("/asesor/consulta")
+async def consultar_asesor_seguridad(consulta: ConsultaAsesor):
+    contexto = {
+        "texto_original": consulta.texto_original,
+        "intent_detectado": consulta.intent_detectado,
+        "nivel_riesgo": consulta.nivel_riesgo,
+        "coincidencias_patrones": consulta.coincidencias_patrones,
+    }
+
+    respuesta_asesor = consultar_asesor(consulta.pregunta, contexto)
+
+    return {
+        "pregunta": consulta.pregunta,
+        "respuesta_asesor": respuesta_asesor,
     }

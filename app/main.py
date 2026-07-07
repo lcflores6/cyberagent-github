@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from app.services.threat_intelligence import consultar_cve, exportar_cves_a_csv
 from fastapi import WebSocket, WebSocketDisconnect
 from app.services.websocket_manager import gestor_websocket
+from app.services.busqueda_semantica import indexar_cves, buscar_semanticamente
 
 app = FastAPI(
     title="Agente de Ciberseguridad",
@@ -44,6 +45,10 @@ class ConsultaAsesor(BaseModel):
 class ConsultaCVE(BaseModel):
     keyword: str
     resultados_max: int = 5
+
+class BusquedaSemantica(BaseModel):
+    consulta: str
+    limite: int = 3
 
 @app.get("/")
 def raiz():
@@ -86,7 +91,7 @@ async def recibir_mensaje(mensaje: MensajeEntrada):
             "nivel_riesgo": nivel_riesgo,
             "coincidencias_patrones": coincidencias,
         })
-        
+
     return {
         "usuario_id": mensaje.usuario_id,
         "texto_original": mensaje.texto,
@@ -152,3 +157,29 @@ async def websocket_alertas(websocket: WebSocket):
             await websocket.receive_text()
     except WebSocketDisconnect:
         gestor_websocket.desconectar(websocket)
+
+@app.post("/semantica/indexar-desde-nvd")
+async def indexar_desde_nvd(consulta: ConsultaCVE):
+    """Busca CVEs en NVD y los indexa en Weaviate para busqueda semantica."""
+    datos_nvd = await consultar_cve(consulta.keyword, consulta.resultados_max)
+
+    if "error" in datos_nvd and not datos_nvd.get("cves"):
+        return {"error": datos_nvd["error"]}
+
+    cantidad_indexada = indexar_cves(datos_nvd.get("cves", []))
+
+    return {
+        "keyword_buscada": consulta.keyword,
+        "cves_indexados": cantidad_indexada,
+    }
+
+
+@app.post("/semantica/buscar")
+async def buscar_por_semantica(busqueda: BusquedaSemantica):
+    """Busca CVEs ya indexados por similitud semantica (no por palabra exacta)."""
+    resultados = buscar_semanticamente(busqueda.consulta, busqueda.limite)
+    return {
+        "consulta": busqueda.consulta,
+        "total_resultados": len(resultados),
+        "resultados": resultados,
+    }

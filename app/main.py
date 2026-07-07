@@ -4,6 +4,9 @@ import httpx
 
 from app.services.pipeline_seguridad import analisis_de_patrones, validar_contexto
 from app.services.asesor_gemini import consultar_asesor
+from fastapi.responses import StreamingResponse
+from app.services.threat_intelligence import consultar_cve, exportar_cves_a_csv
+
 app = FastAPI(
     title="Agente de Ciberseguridad",
     description="Webhook con pipeline de seguridad para deteccion de amenazas",
@@ -35,6 +38,10 @@ class ConsultaAsesor(BaseModel):
     intent_detectado: str = ""
     nivel_riesgo: str = ""
     coincidencias_patrones: list = []
+
+class ConsultaCVE(BaseModel):
+    keyword: str
+    resultados_max: int = 5
 
 @app.get("/")
 def raiz():
@@ -102,3 +109,24 @@ async def consultar_asesor_seguridad(consulta: ConsultaAsesor):
         "pregunta": consulta.pregunta,
         "respuesta_asesor": respuesta_asesor,
     }
+
+@app.post("/threat-intel/buscar-cve")
+async def buscar_cve(consulta: ConsultaCVE):
+    resultado = await consultar_cve(consulta.keyword, consulta.resultados_max)
+    return resultado
+
+
+@app.post("/threat-intel/exportar-csv")
+async def exportar_csv(consulta: ConsultaCVE):
+    datos = await consultar_cve(consulta.keyword, consulta.resultados_max)
+
+    if "error" in datos and not datos.get("cves"):
+        return {"error": datos["error"]}
+
+    contenido_csv = exportar_cves_a_csv(datos)
+
+    return StreamingResponse(
+        iter([contenido_csv]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=cves_resultado.csv"},
+    )
